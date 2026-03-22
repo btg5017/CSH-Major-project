@@ -8,7 +8,7 @@ namespace Fnaf_Fan_Game
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-
+        private int time;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
