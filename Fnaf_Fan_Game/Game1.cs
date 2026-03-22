@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -14,7 +15,7 @@ namespace Fnaf_Fan_Game
         private int roarieProgress;
         private int ballonRoarieProgress;
         private int concreteManProgress;
-
+        private Random random;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -25,7 +26,13 @@ namespace Fnaf_Fan_Game
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
+            time = 0;
+            energy = 100;
+            ritchieProgress = 0;
+            roarieProgress = 0;
+            ballonRoarieProgress = 0;
+            concreteManProgress = 0;
+            random = new Random();
             base.Initialize();
         }
 
