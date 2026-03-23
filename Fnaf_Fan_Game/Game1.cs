@@ -8,10 +8,20 @@ namespace Fnaf_Fan_Game
 {
     public class Game1 : Game
     {
+        /**
+ *    ___________.__       .__       .___      
+ *    \_   _____/|__| ____ |  |    __| _/______
+ *     |    __)  |  |/ __ \|  |   / __ |/  ___/
+ *     |     \   |  \  ___/|  |__/ /_/ |\___ \ 
+ *     \___  /   |__|\___  >____/\____ /____  >
+ *         \/            \/           \/    \/ 
+ */
+        //monogame basics and random
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
         private Random random;
 
+        //gameplay variables
         private int time;
         private int energy;
         private int endTime;
@@ -19,14 +29,19 @@ namespace Fnaf_Fan_Game
         private bool projectorOpen;
         private bool doorOpen;
 
-        private int jumpscaretimer;
-        private bool starting;
-
+        //animatronic progress variables
         private int ritchieProgress;
         private int roarieProgress;
         private int balloonRitchieProgress;
         private int concreteManProgress;
 
+        //tracking variables
+        private int jumpscaretimer;
+        private bool starting;
+        private gameState currentState;
+        private Rooms currentRoom;
+
+        //gamestate enum for statemachine
         enum gameState
         {
             menu,
@@ -34,7 +49,8 @@ namespace Fnaf_Fan_Game
             dead,
             win
         }
-        private gameState currentState = gameState.menu;
+
+        //room enum.
         enum Rooms
         {
             swoom = 1,
@@ -43,7 +59,7 @@ namespace Fnaf_Fan_Game
             outsideLougne = 4,
             northside = 5,
             cryingCorner = 6,
-            projectRoom = 7,
+            loserHallway = 7,
             loserCenter = 8
         }
         public Game1()
@@ -53,24 +69,48 @@ namespace Fnaf_Fan_Game
             IsMouseVisible = true;
         }
 
+        /**
+ *    .___       .__  __  .__       .__  .__               
+ *    |   | ____ |__|/  |_|__|____  |  | |__|_______ ____  
+ *    |   |/    \|  \   __\  \__  \ |  | |  \___   // __ \ 
+ *    |   |   |  \  ||  | |  |/ __ \|  |_|  |/    /\  ___/ 
+ *    |___|___|  /__||__| |__(____  /____/__/_____ \\___  >
+ *             \/                 \/              \/    \/ 
+ */
         protected override void Initialize()
         {
             //initialize all fields.
             starting = true;
             time = 0;
             endTime = 21600;
-            jumpscaretimer = 0;
             energy = 100;
+            onCams = false;
+            projectorOpen = true;
+            doorOpen = false;
+
+            jumpscaretimer = 0;
+            currentState = gameState.menu;
+            currentRoom = Rooms.swoom;
+
             ritchieProgress = 0;
             roarieProgress = 0;
             balloonRitchieProgress = 0;
             concreteManProgress = 0;
-            onCams = false;
+            
             random = new Random();
+
             base.Initialize();
 
         }
 
+        /**
+ *    .____                     .___ _________                __                 __   
+ *    |    |    _________     __| _/ \_   ___ \  ____   _____/  |_  ____   _____/  |_ 
+ *    |    |   /  _ \__  \   / __ |  /    \  \/ /  _ \ /    \   __\/ __ \ /    \   __\
+ *    |    |__(  <_> ) __ \_/ /_/ |  \     \___(  <_> )   |  \  | \  ___/|   |  \  |  
+ *    |_______ \____(____  /\____ |   \______  /\____/|___|  /__|  \___  >___|  /__|  
+ *            \/         \/      \/          \/            \/          \/     \/      
+ */
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -78,24 +118,21 @@ namespace Fnaf_Fan_Game
             // TODO: use this.Content to load your game content here
         }
 
+        /**
+ *     ____ ___            .___       __          
+ *    |    |   \______   __| _/____ _/  |_  ____  
+ *    |    |   /\____ \ / __ |\__  \\   __\/ __ \ 
+ *    |    |  / |  |_> > /_/ | / __ \|  | \  ___/ 
+ *    |______/  |   __/\____ |(____  /__|  \___  >
+ *              |__|        \/     \/          \/ 
+ */
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
             //MUST FIX ALL IF'S +=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-            if (starting)
-            {
-                time = 0;
-                jumpscaretimer = 0;
-                energy = 100;
-                ritchieProgress = 0;
-                roarieProgress = 0;
-                balloonRitchieProgress = 0;
-                concreteManProgress = 0;
-                onCams = false;
-                starting = false;
-            }
+            
             switch (currentState)
             {
                 //gamestate for the main menu before you start playing.
@@ -113,60 +150,78 @@ namespace Fnaf_Fan_Game
 
                 //gamestate for when the game is running.
                 case gameState.playing:
-                    
-                    // === LOGIC FOR LOSING ===
-                    if ((ritchieProgress == 100 || roarieProgress == 100 || balloonRitchieProgress == 100 || concreteManProgress == 100) && doorOpen)
+
+                    /// Checks if this is the start of a night's game loop and if it is then it effectively does what initialize does 
+                    /// and sets its condition to false so it only runs once until made true again
+                    if (starting)
+                    {
+                        time = 0;
+                        jumpscaretimer = 0;
+                        energy = 100;
+                        ritchieProgress = 0;
+                        roarieProgress = 0;
+                        balloonRitchieProgress = 0;
+                        concreteManProgress = 0;
+                        onCams = false;
+                        projectorOpen = true;
+                        doorOpen = false;
+                        starting = false;
+                    }
+
+                    // === === === == LOGIC FOR LOSING == === === ===
+                    if ((ritchieProgress == 100 || roarieProgress == 100 ||
+                        balloonRitchieProgress == 100 || concreteManProgress == 100) && doorOpen)
                     {
                         time = 0;
                         onCams = false;
-                        //transition to loss gamestate
+                        currentState = gameState.dead;
                     }
                     if ((concreteManProgress == 100 && projectorOpen) || concreteManProgress == 110)
                     {
                         time = 0;
                         onCams = false;
-                        //transition to loss gamestate
+                        currentState = gameState.dead;
                     }
                     if (energy == 0)
                     {
                         time = 0;
                         onCams = false;
-                        //transition to loss gamestate
+                        currentState = gameState.dead;
                     }
 
-                    // +++ LOGIC FOR WINNING +++
+                    // +++_+++_+++ - LOGIC FOR WINNING - +++_+++_+++
                     if (time == endTime)
                     {
                         time = 0;
                         onCams = false;
-                        //transition to win gamestate
+                        currentState = gameState.win;
                     }
                     else
                     {
-                        ///+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                        ///will be VERY BIG THIS IS ALL THE ACTUAL GAMEPLAY LOGIC FOR CONTROLS AND PLAYER INTERACTION.
-                        ///+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                        ///+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                        ///gameplay controls for in office, door, projector, Cameras
+                        ///+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                         //game loop with all logic updates and controls.
                         if (!onCams)
                         {
                             //door controls
                             if (true/*if button pressed close door*/)
                             {
-
+                                doorOpen = false;
                             }
                             if (true/*if button pressed open door*/)
                             {
-
+                                doorOpen = true;
                             }
 
                             //projector controls
                             if (true/*if button pressed close projector*/)
                             {
-
+                                projectorOpen = false;
                             }
                             if (true/*if button pressed open projector*/)
                             {
-
+                                projectorOpen = true;
                             }
 
                             //cam controls
@@ -181,9 +236,44 @@ namespace Fnaf_Fan_Game
                             {
                                 onCams = false;
                             }
-                            else if (true/*mouse is in specific areas and left clicked*/)
+                            else
                             {
-                                //switch current room.
+                                //========================================================================
+                                //Gameplay check for if any of the buttons are clicked while cams are on
+
+                                //========================================================================
+                                if (true /*mouse thing for hovering over the button && buttonclicked*/)
+                                {
+                                    currentRoom = Rooms.swoom;
+                                }
+                                if (true /*mouse thing for hovering over the button && buttonclicked*/)
+                                {
+                                    currentRoom = Rooms.userCenter;
+                                }
+                                if (true /*mouse thing for hovering over the button && buttonclicked*/)
+                                {
+                                    currentRoom = Rooms.vader;
+                                }
+                                if (true /*mouse thing for hovering over the button && buttonclicked*/)
+                                {
+                                    currentRoom = Rooms.outsideLougne;
+                                }
+                                if (true /*mouse thing for hovering over the button && buttonclicked*/)
+                                {
+                                    currentRoom = Rooms.northside;
+                                }
+                                if (true /*mouse thing for hovering over the button && buttonclicked*/)
+                                {
+                                    currentRoom = Rooms.cryingCorner;
+                                }
+                                if (true /*mouse thing for hovering over the button && buttonclicked*/)
+                                {
+                                    currentRoom = Rooms.loserHallway;
+                                }
+                                if (true /*mouse thing for hovering over the button && buttonclicked*/)
+                                {
+                                    currentRoom = Rooms.loserCenter;
+                                }
                             }
                         }
                         time++;
@@ -228,6 +318,14 @@ namespace Fnaf_Fan_Game
             base.Update(gameTime);
         }
 
+        /**
+ *    ________                       
+ *    \______ \____________ __  _  __
+ *     |    |  \_  __ \__  \\ \/ \/ /
+ *     |    '\  |  | \// __ \\     / 
+ *    /_______  /__|  (____  /\/\_/  
+ *            \/           \/        
+ */
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
@@ -278,7 +376,7 @@ namespace Fnaf_Fan_Game
                         }
                     }
                     if (concreteManProgress == 100)
-                    {
+                    {,
                         if (jumpscaretimer <= 360)
                         {
                             //draw lounge
